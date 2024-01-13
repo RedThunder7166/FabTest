@@ -42,7 +42,7 @@ public class RobotContainer {
   SmartDashboard.getNumber("Power", 0);
 
     fab_test.setDefaultCommand(new RunCommand(() -> {
-      fab_test.set(0);
+      fab_test.stop();
     }, fab_test));
 
     configureBindings();
@@ -59,31 +59,17 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    m_driverController.a().whileTrue(new RunCommand(() -> {
-      fab_test.frontMotor(-0.4);
-    }, fab_test));
-    m_driverController.b().whileTrue(new RunCommand(() -> {
-      fab_test.frontMotor(-0.8);
-    }, fab_test));
-    m_driverController.y().whileTrue(new RunCommand(() -> {
-      fab_test.frontMotor(-0.9);
-    }, fab_test));
-    m_driverController.x().whileTrue(new RunCommand(() -> {
-      fab_test.frontMotor(-1);
-    }, fab_test));
-  
-    m_driverController.povDown().whileTrue(new RunCommand(() -> {
-      fab_test.backMotor(-0.4);
-    }, fab_test));
-    m_driverController.povRight().whileTrue(new RunCommand(() -> {
-      fab_test.backMotor(-0.8);
-    }, fab_test));
-    m_driverController.povUp().whileTrue(new RunCommand(() -> {
-      fab_test.backMotor(-0.9);
-    }, fab_test));
-    m_driverController.povLeft().whileTrue(new RunCommand(() -> {
-      fab_test.backMotor(-1);
-    }, fab_test));
+    m_driverController.a().whileTrue(fab_test.driveMotors);
+    m_driverController.a().onFalse(fab_test.stopMotors);
+
+    m_driverController.back().onTrue(fab_test.decreaseBoth);
+    m_driverController.start().onTrue(fab_test.increaseBoth);
+
+    m_driverController.leftBumper().onTrue(fab_test.decreaseFront);
+    m_driverController.rightBumper().onTrue(fab_test.increaseFront);
+
+    m_driverController.x().onTrue(fab_test.decreaseBack);
+    m_driverController.b().onTrue(fab_test.increaseBack);
   }
 
   /**
