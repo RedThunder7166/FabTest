@@ -6,11 +6,17 @@ package frc.robot.subsystems;
 
 import java.time.Instant;
 
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -23,17 +29,29 @@ public class fabtest extends SubsystemBase {
   private double both_speed = 8;
   private double front_speed = both_speed;
   private double back_speed = both_speed;
+
+  private GenericEntry rps_input;
+
   /** Creates a new motor. */
   public fabtest() {
     motor1.setNeutralMode(NeutralModeValue.Brake);
     motor2.setNeutralMode(NeutralModeValue.Brake);
+    motor1.setInverted(false);
+    motor2.setInverted(false);
+    var slot0Configs = new Slot0Configs();
+    slot0Configs.kS = 0.05;
+    slot0Configs.kV = 0.12;
+    slot0Configs.kP = 1;
+    slot0Configs.kI = 0;
+    slot0Configs.kD = 0;
 
     ShuffleboardTab tab = Shuffleboard.getTab("Fab test");
     tab.add(this);
     tab.addDouble("Both Speed", () -> both_speed);
     tab.addDouble("Front Speed", () -> front_speed);
     tab.addDouble("Back Speed", () -> back_speed);
-
+    tab.addDouble("Motor RPM", ()-> motor1.getVelocity().getValue());
+    rps_input = tab.add("RPS", 10).withWidget(BuiltInWidgets.kNumberSlider).getEntry();
   }
 
   @Override
@@ -47,17 +65,23 @@ public class fabtest extends SubsystemBase {
     motor2.set(0);
   }
 
-  public void set(double value) {
-    motor1.set(value);
-    motor2.set(value);
-  }
+  // public void set(double value) {
+  //   motor1.set(value);
+  //   motor2.set(value);
+  // }
 
   public void frontMotor(double value) {
-    motor1.set(value);
+    final VelocityVoltage m_request = new VelocityVoltage(0).withSlot(0);
+
+    motor1.setControl(m_request.withVelocity(value).withFeedForward(1));
+    // motor1.set(value);
   }
   public void backMotor(double value) {
-    motor2.set(value);
+    final VelocityVoltage m_request = new VelocityVoltage(0).withSlot(0);
+
+    motor2.setControl(m_request.withVelocity(value).withFeedForward(1));
   }
+
   public void frontMotorInverse(double value) {
     frontMotor(-value);
   }
@@ -65,9 +89,15 @@ public class fabtest extends SubsystemBase {
     backMotor(-value);
   }
 
+  // public final RunCommand driveMotors = new RunCommand(() -> {
+  //   frontMotorInverse(front_speed / 10);
+  //   backMotorInverse(back_speed / 10);
+  // }, this);
   public final RunCommand driveMotors = new RunCommand(() -> {
-    frontMotorInverse(front_speed / 10);
-    backMotorInverse(back_speed / 10);
+    double rps = rps_input.getDouble(0);
+    System.out.println(rps);
+    frontMotor(rps);
+    backMotor(rps);
   }, this);
 
   public final InstantCommand stopMotors = new InstantCommand(this::stop, this);
