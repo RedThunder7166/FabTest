@@ -1,0 +1,45 @@
+{
+  "NetworkTables": {
+    "transitory": {
+      "Shuffleboard": {
+        "Fab test": {
+          "open": true
+        },
+        "open": true
+      },
+      "SmartDashboard": {
+        "mech2d": {
+          "open": true
+        },
+        "open": true
+      }
+    },
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/Fab test/fabtest": "Subsystem",
+      "/SmartDashboard/mech2d": "Mechanism2d"
+    },
+    "windows": {
+      "/Shuffleboard/Fab test/fabtest": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/mech2d": {
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables Info": {
+    "Clients": {
+      "open": true
+    },
+    "visible": true
+  },
+  "NetworkTables Settings": {
+    "mode": "Client (NT3)",
+    "serverTeam": "7166"
+  }
+}

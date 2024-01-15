@@ -7,12 +7,14 @@ package frc.robot.subsystems;
 import java.time.Instant;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.DutyCycle;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -22,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Mechanisms;
 
 public class fabtest extends SubsystemBase {
   private TalonFX motor1 = new TalonFX(13);
@@ -31,6 +34,8 @@ public class fabtest extends SubsystemBase {
   private double back_speed = both_speed;
 
   private GenericEntry rps_input;
+  private final VelocityDutyCycle rps_DutyVelocity = new VelocityDutyCycle(0);
+  private final Mechanisms m_mechanisms = new Mechanisms();
 
   /** Creates a new motor. */
   public fabtest() {
@@ -38,12 +43,16 @@ public class fabtest extends SubsystemBase {
     motor2.setNeutralMode(NeutralModeValue.Brake);
     motor1.setInverted(false);
     motor2.setInverted(false);
-    var slot0Configs = new Slot0Configs();
-    slot0Configs.kS = 0.05;
-    slot0Configs.kV = 0.12;
-    slot0Configs.kP = 1;
+  
+    Slot0Configs slot0Configs = new Slot0Configs();
+    slot0Configs.kS = 0;
+    slot0Configs.kV = 0.01;
+    slot0Configs.kP = 0;
     slot0Configs.kI = 0;
     slot0Configs.kD = 0;
+
+    motor1.getConfigurator().apply(slot0Configs, 0.050);
+    motor2.getConfigurator().apply(slot0Configs, 0.050);
 
     ShuffleboardTab tab = Shuffleboard.getTab("Fab test");
     tab.add(this);
@@ -57,7 +66,7 @@ public class fabtest extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-
+    m_mechanisms.update(motor1.getPosition(), motor1.getVelocity());
   }
 
   public void stop() {
@@ -70,34 +79,36 @@ public class fabtest extends SubsystemBase {
   //   motor2.set(value);
   // }
 
-  public void frontMotor(double value) {
-    final VelocityVoltage m_request = new VelocityVoltage(0).withSlot(0);
-
-    motor1.setControl(m_request.withVelocity(value).withFeedForward(1));
-    // motor1.set(value);
+  public void frontMotorVelocity(double value) {
+    motor1.setControl(rps_DutyVelocity.withSlot(0).withVelocity(-value));
   }
-  public void backMotor(double value) {
-    final VelocityVoltage m_request = new VelocityVoltage(0).withSlot(0);
-
-    motor2.setControl(m_request.withVelocity(value).withFeedForward(1));
+  public void backMotorVelocity(double value) {
+    motor2.setControl(rps_DutyVelocity.withSlot(0).withVelocity(value));
   }
 
-  public void frontMotorInverse(double value) {
-    frontMotor(-value);
+  public void frontMotorPercent(double value) {
+    motor1.set(value);
   }
-  public void backMotorInverse(double value) {
-    backMotor(-value);
+  public void backMotorPercent(double value) {
+    motor2.set(value);
+  }
+
+  public void frontMotorPercentInverse(double value) {
+    frontMotorPercent(-value);
+  }
+  public void backMotorPercentInverse(double value) {
+    backMotorPercent(-value);
   }
 
   // public final RunCommand driveMotors = new RunCommand(() -> {
-  //   frontMotorInverse(front_speed / 10);
-  //   backMotorInverse(back_speed / 10);
+  //   frontMotorPercentInverse(front_speed / 10);
+  //   backMotorPercentInverse(back_speed / 10);
   // }, this);
   public final RunCommand driveMotors = new RunCommand(() -> {
     double rps = rps_input.getDouble(0);
     System.out.println(rps);
-    frontMotor(rps);
-    backMotor(rps);
+    frontMotorVelocity(rps);
+    backMotorVelocity(rps);
   }, this);
 
   public final InstantCommand stopMotors = new InstantCommand(this::stop, this);
