@@ -29,11 +29,14 @@ import frc.robot.Mechanisms;
 public class fabtest extends SubsystemBase {
   private TalonFX motor1 = new TalonFX(13);
   private TalonFX motor2 = new TalonFX(14);
-  private double both_speed = 8;
+  private TalonFX motor3 = new TalonFX(28);
+  private double both_speed = 10;
   private double front_speed = both_speed;
   private double back_speed = both_speed;
+  private double index_speed = both_speed;
 
   private GenericEntry rps_input;
+  private GenericEntry rps_Index_Input;
   private final VelocityDutyCycle rps_DutyVelocity = new VelocityDutyCycle(0);
   private final Mechanisms m_mechanisms = new Mechanisms();
 
@@ -41,8 +44,10 @@ public class fabtest extends SubsystemBase {
   public fabtest() {
     motor1.setNeutralMode(NeutralModeValue.Brake);
     motor2.setNeutralMode(NeutralModeValue.Brake);
+    
     motor1.setInverted(false);
     motor2.setInverted(false);
+    motor3.setInverted(true);
   
     Slot0Configs slot0Configs = new Slot0Configs();
     slot0Configs.kS = 0;
@@ -53,14 +58,17 @@ public class fabtest extends SubsystemBase {
 
     motor1.getConfigurator().apply(slot0Configs, 0.050);
     motor2.getConfigurator().apply(slot0Configs, 0.050);
+    motor3.getConfigurator().apply(slot0Configs,0.050);
 
     ShuffleboardTab tab = Shuffleboard.getTab("Fab test");
     tab.add(this);
     tab.addDouble("Both Speed", () -> both_speed);
     tab.addDouble("Front Speed", () -> front_speed);
     tab.addDouble("Back Speed", () -> back_speed);
+    tab.addDouble("index Speed", () -> index_speed);
     tab.addDouble("Motor RPM", ()-> motor1.getVelocity().getValue());
     rps_input = tab.add("RPS", 10).withWidget(BuiltInWidgets.kNumberSlider).getEntry();
+    rps_Index_Input = tab.add("RPS_Indexer", 10).withWidget(BuiltInWidgets.kNumberSlider).getEntry();  
   }
 
   @Override
@@ -72,6 +80,7 @@ public class fabtest extends SubsystemBase {
   public void stop() {
     motor1.set(0);
     motor2.set(0);
+    motor3.set(0);
   }
 
   // public void set(double value) {
@@ -84,6 +93,9 @@ public class fabtest extends SubsystemBase {
   }
   public void backMotorVelocity(double value) {
     motor2.setControl(rps_DutyVelocity.withSlot(0).withVelocity(value));
+  }
+  public void indexerMotorVelocity(double value){
+    motor3.setControl(rps_DutyVelocity.withSlot(0).withVelocity(value));
   }
 
   public void frontMotorPercent(double value) {
@@ -102,13 +114,15 @@ public class fabtest extends SubsystemBase {
 
   // public final RunCommand driveMotors = new RunCommand(() -> {
   //   frontMotorPercentInverse(front_speed / 10);
-  //   backMotorPercentInverse(back_speed / 10);
+  //   backMotorPercent(back_speed / 10);
   // }, this);
   public final RunCommand driveMotors = new RunCommand(() -> {
     double rps = rps_input.getDouble(0);
+    double rps_Index = rps_Index_Input.getDouble(0);
     System.out.println(rps);
     frontMotorVelocity(rps);
     backMotorVelocity(rps);
+    indexerMotorVelocity(rps_Index);
   }, this);
 
   public final InstantCommand stopMotors = new InstantCommand(this::stop, this);
